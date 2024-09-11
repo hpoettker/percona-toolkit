@@ -37,13 +37,7 @@ $sb->create_dbs($master_dbh, ['test']);
 $sb->load_file('master', "t/lib/samples/char-chunking/ascii.sql", "test");
 $master_dbh->do('alter table test.ascii drop column `i`');
 
-wait_until(
-   sub {
-      my $row;
-      eval {$row = $slave_dbh->selectall_arrayref("select * from test.ascii");};
-      return 1 if $row && @$row > 100;
-   },
-);
+$sb->wait_for_slaves();
 
 $slave_dbh->do('delete from test.ascii where c like "Zesus%"');
 

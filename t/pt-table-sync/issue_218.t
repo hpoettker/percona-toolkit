@@ -40,6 +40,8 @@ $sb->wipe_clean($slave_dbh);
 $sb->create_dbs($master_dbh, [qw(issue218)]);
 $sb->use('master', '-e "CREATE TABLE issue218.t1 (i INT)"');
 $sb->use('master', '-e "INSERT INTO issue218.t1 VALUES (NULL)"');
+$sb->wait_for_slaves();
+
 qx($trunk/bin/pt-table-sync --no-check-slave --print --database issue218 h=127.1,P=12345,u=msandbox,p=msandbox P=12346);
 ok(!$?, 'Issue 218: NULL values compare as equal');
 
