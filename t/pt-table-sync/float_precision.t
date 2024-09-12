@@ -48,7 +48,7 @@ $output = `$trunk/bin/pt-table-sync --sync-to-master h=127.1,P=12346,u=msandbox,
 $output = remove_traces($output);
 is(
    $output,
-   "REPLACE INTO `test`.`fl`(`id`, `f`, `d`) VALUES ('1', 1.0000011921, 2.0000012);
+   "REPLACE INTO `test`.`fl`(`id`, `f`, `d`) VALUES ('1', 1.0000011921, 2.0000011999999998);
 ",
    'No --float-precision so double col diff at high precision (issue 410)'
 );
@@ -61,6 +61,23 @@ is(
    $output,
    '',
    '--float-precision so no more diff (issue 410)'
+);
+
+# Although the SQL statement contains serialized values with more than necessary decimal digits
+# we produce the expected value on execution
+$output = `$trunk/bin/pt-table-sync --sync-to-master h=127.1,P=12346,u=msandbox,p=msandbox,D=test,t=fl --execute 2>&1`;
+is(
+   $output,
+   '',
+   'REPLACE statement can be successfully applied'
+);
+
+$sb->wait_for_slaves();
+my @rows = $slave_dbh->selectrow_array('SELECT `d` FROM `test`.`fl` WHERE `d` = 2.0000012');
+is_deeply(
+   \@rows,
+   [2.0000012],
+   'Floating point values are set correctly in round trip'
 );
 
 # #############################################################################
